@@ -2026,7 +2026,7 @@ MonoBehaviour:
   btnMoves: {fileID: 459018137}
   btnAutoplay: {fileID: 857291615}
   btnAutoLose: {fileID: 1741161867}
-  btnTimeAttack: {fileID: 0}
+  btnTimeAttack: {fileID: 508131335}
 --- !u!1 &1545288377
 GameObject:
   m_ObjectHideFlags: 0
