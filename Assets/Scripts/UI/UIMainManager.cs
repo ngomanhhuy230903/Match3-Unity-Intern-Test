@@ -149,4 +149,8 @@ public class UIMainManager : MonoBehaviour
     {
         m_gameManager.SetState(GameManager.eStateGame.GAME_STARTED);
     }
+    internal void LoadLevelTimeAttack()
+    {
+        m_gameManager.LoadLevel(GameManager.eLevelMode.TIME_ATTACK, false, false);
+    }
 }

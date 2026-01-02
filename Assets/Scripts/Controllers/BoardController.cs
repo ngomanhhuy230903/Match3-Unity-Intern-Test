@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,27 +17,71 @@ public class BoardController : MonoBehaviour
     private bool m_autoplayToWin = true;
     private Coroutine m_autoplayCoroutine;
 
+    private bool m_isTimeAttackMode = false;
+    private Dictionary<Item, CellPosition> m_itemOriginalPositions;
+
     public bool IsBusy => m_isBusy;
 
-    public void StartGame(GameManager manager, GameSettings settings, bool isAutoplay, bool autoplayToWin)
+    private class CellPosition
+    {
+        public int x;
+        public int y;
+        public CellPosition(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    public void StartGame(GameManager manager, GameSettings settings, bool isAutoplay, bool autoplayToWin, bool isTimeAttackMode = false)
     {
         m_gameManager = manager;
         m_gameSettings = settings;
         m_isAutoplay = isAutoplay;
         m_autoplayToWin = autoplayToWin;
+        m_isTimeAttackMode = isTimeAttackMode;
+
+        m_itemOriginalPositions = new Dictionary<Item, CellPosition>();
 
         m_board = new Board(this.transform, settings);
         m_board.FillWithDivisibleByThree();
 
+        if (m_isTimeAttackMode)
+        {
+            SaveInitialPositions();
+        }
+
         m_bottomCells = gameObject.AddComponent<BottomCellsController>();
         m_bottomCells.Setup(this.transform);
 
-        m_bottomCells.OnCellsFullEvent += OnGameLose;
+        if (!m_isTimeAttackMode)
+        {
+            m_bottomCells.OnCellsFullEvent += OnGameLose;
+        }
+        else
+        {
+        }
+
         m_bottomCells.OnMatchClearedEvent += OnMatchCleared;
 
         if (m_isAutoplay)
         {
             m_autoplayCoroutine = StartCoroutine(AutoplayRoutine());
+        }
+    }
+
+    private void SaveInitialPositions()
+    {
+        for (int x = 0; x < m_gameSettings.BoardSizeX; x++)
+        {
+            for (int y = 0; y < m_gameSettings.BoardSizeY; y++)
+            {
+                Cell cell = m_board.GetCell(x, y);
+                if (cell != null && !cell.IsEmpty)
+                {
+                    m_itemOriginalPositions[cell.Item] = new CellPosition(x, y);
+                }
+            }
         }
     }
 
@@ -49,6 +94,18 @@ public class BoardController : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0;
+
+            if (m_isTimeAttackMode)
+            {
+                Item clickedItem = m_bottomCells.GetItemAtPosition(mousePos);
+                if (clickedItem != null)
+                {
+                    ReturnItemToBoard(clickedItem);
+                    return;
+                }
+            }
+
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
             if (hit.collider != null)
@@ -60,6 +117,33 @@ public class BoardController : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void ReturnItemToBoard(Item item)
+    {
+        CellPosition originalPos = m_itemOriginalPositions[item];
+        Cell targetCell = m_board.GetCell(originalPos.x, originalPos.y);
+
+        if (targetCell == null)
+        {
+            return;
+        }
+
+        if (!targetCell.IsEmpty)
+        {
+            return;
+        }
+
+        m_isBusy = true;
+
+        m_bottomCells.RemoveItem(item);
+
+        targetCell.Assign(item);
+
+        item.View.DOMove(targetCell.transform.position, 0.3f).OnComplete(() =>
+        {
+            m_isBusy = false;
+        });
     }
 
     private IEnumerator AutoplayRoutine()
@@ -134,6 +218,7 @@ public class BoardController : MonoBehaviour
         {
             if (kvp.Value == 2)
             {
+                Debug.Log($"Found type with 2 items in bottom: {kvp.Key}");
                 if (boardItemsByType.ContainsKey(kvp.Key) && boardItemsByType[kvp.Key].Count > 0)
                 {
                     return boardItemsByType[kvp.Key][0];
@@ -145,6 +230,7 @@ public class BoardController : MonoBehaviour
         {
             if (kvp.Value == 1)
             {
+                Debug.Log($"Found type with 1 item in bottom: {kvp.Key}");
                 if (boardItemsByType.ContainsKey(kvp.Key) && boardItemsByType[kvp.Key].Count > 0)
                 {
                     return boardItemsByType[kvp.Key][0];
@@ -155,6 +241,7 @@ public class BoardController : MonoBehaviour
         var mostCommonType = boardItemsByType.OrderByDescending(x => x.Value.Count).FirstOrDefault();
         if (mostCommonType.Value != null && mostCommonType.Value.Count > 0)
         {
+            Debug.Log($"Selecting most common type: {mostCommonType.Key} ({mostCommonType.Value.Count} items)");
             return mostCommonType.Value[0];
         }
 
@@ -220,7 +307,6 @@ public class BoardController : MonoBehaviour
 
         if (leastCommonType.Value != null && leastCommonType.Value.Count > 0)
         {
-            Debug.Log($"Selecting least common type: {leastCommonType.Key}");
             return leastCommonType.Value[0];
         }
 
@@ -341,7 +427,10 @@ public class BoardController : MonoBehaviour
 
         if (m_bottomCells != null)
         {
-            m_bottomCells.OnCellsFullEvent -= OnGameLose;
+            if (!m_isTimeAttackMode)
+            {
+                m_bottomCells.OnCellsFullEvent -= OnGameLose;
+            }
             m_bottomCells.OnMatchClearedEvent -= OnMatchCleared;
             m_bottomCells.Clear();
         }
@@ -349,6 +438,11 @@ public class BoardController : MonoBehaviour
         if (m_board != null)
         {
             m_board.Clear();
+        }
+
+        if (m_itemOriginalPositions != null)
+        {
+            m_itemOriginalPositions.Clear();
         }
     }
 }

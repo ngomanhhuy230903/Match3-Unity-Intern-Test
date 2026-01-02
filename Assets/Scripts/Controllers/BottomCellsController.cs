@@ -59,6 +59,43 @@ public class BottomCellsController : MonoBehaviour
         });
     }
 
+    public void RemoveItem(Item item)
+    {
+        if (itemsInCells.Contains(item))
+        {
+            itemsInCells.Remove(item);
+            ReorganizeItems();
+        }
+    }
+
+    public Item GetItemAtPosition(Vector3 worldPosition)
+    {
+        for (int i = 0; i < itemsInCells.Count; i++)
+        {
+            if (itemsInCells[i].View != null)
+            {
+                SpriteRenderer spriteRenderer = itemsInCells[i].View.GetComponent<SpriteRenderer>();
+                if (spriteRenderer != null)
+                {
+                    Bounds bounds = spriteRenderer.bounds;
+                    if (bounds.Contains(worldPosition))
+                    {
+                        return itemsInCells[i];
+                    }
+                }
+                else
+                {
+                    float distance = Vector3.Distance(itemsInCells[i].View.position, worldPosition);
+                    if (distance < 0.5f)
+                    {
+                        return itemsInCells[i];
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private void CheckForMatches()
     {
         var grouped = itemsInCells
@@ -73,7 +110,7 @@ public class BottomCellsController : MonoBehaviour
             ClearMatches(matchedItems);
         }
         else if (itemsInCells.Count >= MAX_CELLS)
-        {;
+        {
             OnCellsFullEvent?.Invoke();
         }
     }
@@ -94,7 +131,6 @@ public class BottomCellsController : MonoBehaviour
 
     private void ClearMatches(List<Item> matches)
     {
-
         foreach (var item in matches)
         {
             item.View.DOScale(0f, 0.2f).OnComplete(() =>
@@ -106,6 +142,7 @@ public class BottomCellsController : MonoBehaviour
         }
 
         OnMatchClearedEvent?.Invoke(3);
+
         ReorganizeItems();
     }
 
@@ -139,6 +176,7 @@ public class BottomCellsController : MonoBehaviour
     {
         return itemsInCells.Count;
     }
+
     public Item GetItemAt(int index)
     {
         if (index < 0 || index >= itemsInCells.Count)

@@ -58,7 +58,6 @@ public class Board
             }
         }
 
-        //set neighbours
         for (int x = 0; x < boardSizeX; x++)
         {
             for (int y = 0; y < boardSizeY; y++)
@@ -103,7 +102,6 @@ public class Board
                 item.SetType(Utils.GetRandomNormalTypeExcept(types.ToArray()));
                 item.SetView();
                 item.SetViewRoot(m_root);
-
                 cell.Assign(item);
                 cell.ApplyItemPosition(false);
             }

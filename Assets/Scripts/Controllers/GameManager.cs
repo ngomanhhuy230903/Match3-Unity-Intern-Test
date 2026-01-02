@@ -11,7 +11,8 @@ public class GameManager : MonoBehaviour
     public enum eLevelMode
     {
         TIMER,
-        MOVES
+        MOVES,
+        TIME_ATTACK
     }
 
     public enum eStateGame
@@ -74,8 +75,10 @@ public class GameManager : MonoBehaviour
     public void LoadLevel(eLevelMode mode, bool isAutoplay = false, bool autoplayToWin = true)
     {
         m_isWin = false;
+
+        bool isTimeAttackMode = (mode == eLevelMode.TIME_ATTACK);
         m_boardController = new GameObject("BoardController").AddComponent<BoardController>();
-        m_boardController.StartGame(this, m_gameSettings, isAutoplay, autoplayToWin);
+        m_boardController.StartGame(this, m_gameSettings, isAutoplay, autoplayToWin, isTimeAttackMode);
 
         if (mode == eLevelMode.MOVES)
         {
@@ -85,16 +88,23 @@ public class GameManager : MonoBehaviour
         else if (mode == eLevelMode.TIMER)
         {
             m_levelCondition = this.gameObject.AddComponent<LevelTime>();
-            m_levelCondition.Setup(m_gameSettings.LevelMoves, m_uiMenu.GetLevelConditionView(), this);
+            m_levelCondition.Setup(m_gameSettings.LevelTime, m_uiMenu.GetLevelConditionView(), this);
+        }
+        else if (mode == eLevelMode.TIME_ATTACK)
+        {
+            m_levelCondition = this.gameObject.AddComponent<LevelTime>();
+            m_levelCondition.Setup(60f, m_uiMenu.GetLevelConditionView(), this);
         }
 
         m_levelCondition.ConditionCompleteEvent += GameOver;
         State = eStateGame.GAME_STARTED;
     }
+
     public void GameOver()
     {
         GameOver(false);
     }
+
     public void GameOver(bool isWin)
     {
         m_isWin = isWin;
@@ -130,6 +140,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
 
         State = eStateGame.GAME_OVER;
+
         m_uiMenu.ShowGameOver(m_isWin);
 
         if (m_levelCondition != null)
