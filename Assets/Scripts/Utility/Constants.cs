@@ -16,7 +16,7 @@
 
     public const string PREFAB_NORMAL_TYPE_SIX = "prefabs/itemNormal06";
 
-    public const string PREFAB_NORMAL_TYPE_SEVEN = "prefabs/itemNormal07";
+    //public const string PREFAB_NORMAL_TYPE_SEVEN = "prefabs/itemNormal07";
 
     public const string PREFAB_BONUS_HORIZONTAL = "prefabs/itemBonusHorizontal";
 
