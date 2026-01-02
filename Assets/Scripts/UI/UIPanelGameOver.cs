@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class UIPanelGameOver : MonoBehaviour, IMenu
 {
     [SerializeField] private Button btnClose;
+    [SerializeField] private Text txtResult;
 
     private UIMainManager m_mngr;
 
@@ -38,5 +39,12 @@ public class UIPanelGameOver : MonoBehaviour, IMenu
     {
         this.gameObject.SetActive(true);
     }
-
+    public void ShowResult(bool isWin)
+    {
+        if (txtResult != null)
+        {
+            txtResult.text = isWin ? "YOU WIN!" : "GAME OVER!";
+        }
+        Show();
+    }
 }

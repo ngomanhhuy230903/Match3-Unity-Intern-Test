@@ -18,7 +18,7 @@ public class LevelMoves : LevelCondition
 
         m_board = board;
 
-        m_board.OnMoveEvent += OnMove;
+       // m_board.OnMoveEvent += OnMove;
 
         UpdateText();
     }
@@ -44,7 +44,7 @@ public class LevelMoves : LevelCondition
 
     protected override void OnDestroy()
     {
-        if (m_board != null) m_board.OnMoveEvent -= OnMove;
+        //if (m_board != null) m_board.OnMoveEvent -= OnMove;
 
         base.OnDestroy();
     }

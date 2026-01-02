@@ -8,8 +8,8 @@ using UnityEngine.UI;
 public class UIMainManager : MonoBehaviour
 {
     private IMenu[] m_menuList;
-
     private GameManager m_gameManager;
+    private bool m_isWin = false;
 
     private void Awake()
     {
@@ -26,6 +26,7 @@ public class UIMainManager : MonoBehaviour
 
     internal void ShowMainMenu()
     {
+        m_isWin = false;
         m_gameManager.ClearLevel();
         m_gameManager.SetState(GameManager.eStateGame.MAIN_MENU);
     }
@@ -67,7 +68,7 @@ public class UIMainManager : MonoBehaviour
                 ShowMenu<UIPanelPause>();
                 break;
             case GameManager.eStateGame.GAME_OVER:
-                ShowMenu<UIPanelGameOver>();
+                ShowGameOverPanel(m_isWin);
                 break;
         }
     }
@@ -77,14 +78,40 @@ public class UIMainManager : MonoBehaviour
         for (int i = 0; i < m_menuList.Length; i++)
         {
             IMenu menu = m_menuList[i];
-            if(menu is T)
+            if (menu is T)
             {
                 menu.Show();
             }
             else
             {
                 menu.Hide();
-            }            
+            }
+        }
+    }
+
+    public void ShowGameOver(bool isWin)
+    {
+        m_isWin = isWin;
+    }
+
+    private void ShowGameOverPanel(bool isWin)
+    {
+        UIPanelGameOver gameOverPanel = m_menuList.Where(x => x is UIPanelGameOver)
+            .Cast<UIPanelGameOver>()
+            .FirstOrDefault();
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.ShowResult(isWin);
+
+            for (int i = 0; i < m_menuList.Length; i++)
+            {
+                IMenu menu = m_menuList[i];
+                if (!(menu is UIPanelGameOver))
+                {
+                    menu.Hide();
+                }
+            }
         }
     }
 
@@ -95,7 +122,6 @@ public class UIMainManager : MonoBehaviour
         {
             return game.LevelConditionView;
         }
-
         return null;
     }
 
@@ -106,12 +132,17 @@ public class UIMainManager : MonoBehaviour
 
     internal void LoadLevelMoves()
     {
-        m_gameManager.LoadLevel(GameManager.eLevelMode.MOVES);
+        m_gameManager.LoadLevel(GameManager.eLevelMode.MOVES, false, false);
     }
 
     internal void LoadLevelTimer()
     {
-        m_gameManager.LoadLevel(GameManager.eLevelMode.TIMER);
+        m_gameManager.LoadLevel(GameManager.eLevelMode.TIMER, false, false);
+    }
+
+    internal void LoadLevelAutoplay(bool autoplayToWin)
+    {
+        m_gameManager.LoadLevel(GameManager.eLevelMode.MOVES, true, autoplayToWin);
     }
 
     internal void ShowGameMenu()

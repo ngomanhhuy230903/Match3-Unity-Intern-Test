@@ -674,4 +674,93 @@ public class Board
             }
         }
     }
+    internal void FillWithDivisibleByThree()
+    {
+        int totalCells = boardSizeX * boardSizeY;
+        var allTypes = (NormalItem.eNormalType[])Enum.GetValues(typeof(NormalItem.eNormalType));
+        int typeCount = allTypes.Length;
+        List<NormalItem.eNormalType> itemTypes = new List<NormalItem.eNormalType>();
+
+        foreach (var type in allTypes)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                itemTypes.Add(type);
+            }
+        }
+
+        int assigned = typeCount * 3;
+        int remaining = totalCells - assigned;
+
+        if (remaining > 0)
+        {
+            remaining = (remaining / 3) * 3;
+            while (remaining > 0)
+            {
+                int randomTypeIndex = UnityEngine.Random.Range(0, typeCount);
+                for (int i = 0; i < 3; i++)
+                {
+                    itemTypes.Add(allTypes[randomTypeIndex]);
+                }
+
+                remaining -= 3;
+            }
+        }
+
+        var grouped = itemTypes.GroupBy(t => t).OrderBy(g => g.Key);
+        int debugTotal = 0;
+        bool allValid = true;
+
+        foreach (var group in grouped)
+        {
+            int count = group.Count();
+            debugTotal += count;
+            bool divisibleBy3 = count % 3 == 0;
+            if (!divisibleBy3) allValid = false;
+        }
+
+        for (int i = itemTypes.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            var temp = itemTypes[i];
+            itemTypes[i] = itemTypes[j];
+            itemTypes[j] = temp;
+        }
+
+        int currentIndex = 0;
+
+        for (int x = 0; x < boardSizeX; x++)
+        {
+            for (int y = 0; y < boardSizeY; y++)
+            {
+                if (currentIndex >= itemTypes.Count)
+                {
+                    break;
+                }
+                Cell cell = m_cells[x, y];
+                NormalItem item = new NormalItem();
+                item.SetType(itemTypes[currentIndex]);
+                item.SetView();
+                item.SetViewRoot(m_root);
+                cell.Assign(item);
+                cell.ApplyItemPosition(false);
+                currentIndex++;
+            }
+        }
+    }
+    public bool IsCellEmpty(int x, int y)
+    {
+        if (x < 0 || x >= boardSizeX || y < 0 || y >= boardSizeY)
+            return true;
+
+        return m_cells[x, y].IsEmpty;
+    }
+
+    public Cell GetCell(int x, int y)
+    {
+        if (x < 0 || x >= boardSizeX || y < 0 || y >= boardSizeY)
+            return null;
+
+        return m_cells[x, y];
+    }
 }
